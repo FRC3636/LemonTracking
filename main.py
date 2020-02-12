@@ -4,9 +4,10 @@ import math
 import threading
 from networktables import NetworkTables
 
-#cap = cv2.VideoCapture(1)
-cap = cv2.VideoCapture('http://10.36.36.216:4747/mjpegfeed?640x480')   
-         
+cap = cv2.VideoCapture(1)
+#cap = cv2.VideoCapture('http://10.36.36.216:4747/mjpegfeed?640x480')   
+
+# Sending stuff to RoboRio things       
 def connectionListener(connected, info):
     print(info, '; Connected=%s' % connected)
     with cond:
@@ -38,6 +39,8 @@ def uploadPosition(x, y):
     sd.putNumber('X', x);
     sd.putNumber('Y', y)
 
+
+
 # Lemon finder function
 def lemonFinder(frame):
     # Converting image to hs
@@ -60,7 +63,7 @@ def lemonFinder(frame):
     #mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     #mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     mask = cv2.erode(mask, kernel, iterations=1)
-    #mask = cv2.dilate(mask, kernel, iterations=1)
+    mask = cv2.dilate(mask, kernel, iterations=1)
     #mask = cv2.dilate(mask, kernel, iterations=4)
     
     
@@ -84,10 +87,21 @@ def lemonFinder(frame):
         if (w * h) > 500:
             balls += 1
             
+            # X and y of center of ball
+            centerX = y + (w / 2)
+            centerY = y + (h / 2)
+            
+            # Finding width and height of shape
+            screenHeight, screenWidth = frame.shape[:2]
+            
+            # Finding percentage of ball on screen
+            centerXPercent = int((centerX / screenWidth) * 100)
+            centerYPercent = int((centerY / screenHeight) * 100)
+            
             # Finding closest ball
             if (w * h) > trackA:
-                trackX = x + (w / 2)
-                trackY = y + (h / 2)
+                trackX = centerXPercent
+                trackY = centerYPercent
                 trackA = (w * h)
             
             # Draw rectangle
@@ -96,7 +110,9 @@ def lemonFinder(frame):
             # Add lemon position text
             cv2.putText(frame, 'Ball' + str(balls), (x + 5, y + (h/4)), 1, 1, 255, 2)
             cv2.putText(frame, 'Center:', (x + 5, y + 2 * (h/4)), 1, 1, 255, 2)
-            cv2.putText(frame, '(' + str(x + (w/2)) + ', ' + str(y + (h/2)) + ')', (x + 5, y + 3 * (h/4)), 1, 1, 255, 2)
+            cv2.putText(frame, '(' + str(centerX) + ', ' + str(centerY) + ')', (x + 5, y + 3 * (h/4)), 1, 1, 255, 2)
+            
+            
             
     # resize the image
     #frame = rescale_frame(frame, 300)
