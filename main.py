@@ -4,8 +4,8 @@ import math
 import threading
 from networktables import NetworkTables
 
-cap = cv2.VideoCapture(1)
-#cap = cv2.VideoCapture('http://10.36.36.216:4747/mjpegfeed?640x480')   
+#cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture('http://10.36.36.216:4747/mjpegfeed?640x480')   
 
 # Sending stuff to RoboRio things       
 def connectionListener(connected, info):
@@ -43,6 +43,11 @@ def uploadPosition(x, y):
 
 # Lemon finder function
 def lemonFinder(frame):
+
+    # Set null for trackX and Y
+    trackX = None
+    trackY = None    
+    
     # Converting image to hs
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     
@@ -88,22 +93,28 @@ def lemonFinder(frame):
             balls += 1
             
             # X and y of center of ball
-            centerX = y + (w / 2)
+            centerX = x + (w / 2)
             centerY = y + (h / 2)
+
             
             # Finding width and height of shape
             screenHeight, screenWidth = frame.shape[:2]
             
+            
             # Finding percentage of ball on screen
-            centerXPercent = int((centerX / screenWidth) * 100)
-            centerYPercent = int((centerY / screenHeight) * 100)
+            centerXPercent = int((centerX / float(screenWidth)) * 100)
+            centerYPercent = int((centerY / float(screenHeight)) * 100)
+            
+            #print(str(centerX) + ", " + str(centerY))
+            print(str(centerXPercent) + ", " + str(centerYPercent))
+            #print(str(screenHeight) + ", " + str(screenWidth))
             
             # Finding closest ball
             if (w * h) > trackA:
                 trackX = centerXPercent
                 trackY = centerYPercent
                 trackA = (w * h)
-            
+                
             # Draw rectangle
             cv2.rectangle(frame, (x, y), (x + w,y + h), (200,100,100), 2)
             
@@ -144,8 +155,9 @@ def lemonFinder(frame):
     '''
     
     # Uploading x & y of closest ball to roborio
-    print('(' + str(trackX) + ', ' + str(trackY) + ')')
-    uploadPosition(trackX, trackY)
+    #print('(' + str(trackX) + ', ' + str(trackY) + ')')
+    if(trackX is not None and trackY is not None):
+        uploadPosition(trackX, trackY)
     
     # Return frame and mask
     return(frame, mask)
