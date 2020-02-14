@@ -5,26 +5,7 @@ import threading
 from networktables import NetworkTables
 
 cap = cv2.VideoCapture(1)
-#cap = cv2.VideoCapture('http://10.36.36.216:4747/mjpegfeed?640x480')   
-
-# Sending stuff to RoboRio things       
-def connectionListener(connected, info):
-    print(info, '; Connected=%s' % connected)
-    with cond:
-        notified[0] = True
-        cond.notify()
-
-cond = threading.Condition()
-notified = [False]
-NetworkTables.initialize(server='10.36.36.2')
-NetworkTables.addConnectionListener(connectionListener, immediateNotify=True)
-with cond:
-    print("Waiting")
-    if not notified[0]:
-        cond.wait()
-
-# Insert your processing code here
-print("Connected!")
+#cap = cv2.VideoCapture('http://10.36.36.216:4747/mjpegfeed?640x480')
 
 # Rescaling function
 def rescale_frame(res, percent=75):
@@ -32,14 +13,6 @@ def rescale_frame(res, percent=75):
             height = int(res.shape[0] * percent/ 100)
             dim = (width, height)
             return cv2.resize(res, dim, interpolation =cv2.INTER_AREA)
-
-
-def uploadPosition(x, y):
-    sd = NetworkTables.getTable('SmartDashboard')
-    sd.putNumber('X', x);
-    sd.putNumber('Y', y)
-
-
 
 # Lemon finder function
 def lemonFinder(frame):
@@ -56,7 +29,7 @@ def lemonFinder(frame):
     
     
     # Define range of yellow  color in HSV
-    lower_yellow = np.array([25,60,15]) # old: [21,60,15]
+    lower_yellow = np.array([21,70,15]) # old: [21,60,15]
     upper_yellow = np.array([35,255,255]) # old: [32,255,255]
 
     # Find yellow
@@ -64,12 +37,8 @@ def lemonFinder(frame):
     
     # Cleaning up mask
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
-    #mask = cv2.erode(mask, kernel, iterations=1)
-    #mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-    #mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     mask = cv2.erode(mask, kernel, iterations=1)
     mask = cv2.dilate(mask, kernel, iterations=1)
-    #mask = cv2.dilate(mask, kernel, iterations=4)
     
     
     # Bounding boxes
@@ -95,24 +64,11 @@ def lemonFinder(frame):
             # X and y of center of ball
             centerX = x + (w / 2)
             centerY = y + (h / 2)
-
-            
-            # Finding width and height of shape
-            screenHeight, screenWidth = frame.shape[:2]
-            
-            
-            # Finding percentage of ball on screen
-            centerXPercent = int((centerX / float(screenWidth)) * 100)
-            centerYPercent = int((centerY / float(screenHeight)) * 100)
-            
-            #print(str(centerX) + ", " + str(centerY))
-            print(str(centerXPercent) + ", " + str(centerYPercent))
-            #print(str(screenHeight) + ", " + str(screenWidth))
             
             # Finding closest ball
             if (w * h) > trackA:
-                trackX = centerXPercent
-                trackY = centerYPercent
+                trackX = centerX
+                trackY = centerY
                 trackA = (w * h)
                 
             # Draw rectangle
@@ -126,13 +82,7 @@ def lemonFinder(frame):
             
             
     # resize the image
-    #frame = rescale_frame(frame, 300)
-    
-    # Uploading x & y of closest ball to roborio
-    #print('(' + str(trackX) + ', ' + str(trackY) + ')')
-    if(trackX is not None and trackY is not None):
-        uploadPosition(trackX, trackY)
-        
+    frame = rescale_frame(frame, 300)
     
     # Return frame and mask
     return(frame, mask)
@@ -146,10 +96,6 @@ while(True):
  
     # Run the lemon finder function
     frame, mask = lemonFinder(frame)    
-    
-    
-    # Resize the frame
-    # frame = rescale_frame(frame, 200)
     
     # Show the frames
     cv2.imshow('coloredCircles', frame)
