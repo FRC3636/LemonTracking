@@ -16,10 +16,6 @@ def rescale_frame(res, percent=75):
 
 # Lemon finder function
 def lemonFinder(frame):
-
-    # Set null for trackX and Y
-    trackX = None
-    trackY = None    
     
     # Converting image to hs
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -50,7 +46,11 @@ def lemonFinder(frame):
     balls = 0
         
     # Variables for picking closest ball
-    trackA = 0
+    trackX = 0
+    trackY = 0
+    trackW = 2
+    trackH = 2
+    trackA = 1
     
     # Run for every contour
     for cont in contours:
@@ -61,31 +61,42 @@ def lemonFinder(frame):
         if (w * h) > 500:
             balls += 1
             
-            # X and y of center of ball
+            # centers
             centerX = x + (w / 2)
             centerY = y + (h / 2)
             
             # Finding closest ball
             if (w * h) > trackA:
-                trackX = centerX
-                trackY = centerY
+                trackX = x
+                trackY = y
                 trackA = (w * h)
+                trackW = w
+                trackH = h
                 
             # Draw rectangle
             cv2.rectangle(frame, (x, y), (x + w,y + h), (200,100,100), 2)
             
             # Add lemon position text
             cv2.putText(frame, 'Ball' + str(balls), (x + 5, y + (h/4)), 1, 1, 255, 2)
-            cv2.putText(frame, 'Center:', (x + 5, y + 2 * (h/4)), 1, 1, 255, 2)
-            cv2.putText(frame, '(' + str(centerX) + ', ' + str(centerY) + ')', (x + 5, y + 3 * (h/4)), 1, 1, 255, 2)
-            
+            cv2.putText(frame, 'Pos:', (x + 5, y + 2 * (h/4)), 1, 1, 255, 2)
+            cv2.putText(frame, '(' + str(x) + ', ' + str(y) + ')', (x + 5, y + 3 * (h/4)), 1, 1, 255, 2)
+        
+    # crop image
+    
+    print("track")
+    print(trackX, trackY, trackH, trackW)
+    xpos = trackX + trackW
+    ypos = trackY + trackH
+    crop = frame[trackY:ypos,trackX:xpos]
+    print("crop")
+    print(crop.shape)
             
             
     # resize the image
-    frame = rescale_frame(frame, 300)
+    # frame = rescale_frame(frame, 300)
     
     # Return frame and mask
-    return(frame, mask)
+    return(frame, crop)
 
 
 
@@ -95,11 +106,11 @@ while(True):
     ret, frame = cap.read()
  
     # Run the lemon finder function
-    frame, mask = lemonFinder(frame)    
+    frame, crop = lemonFinder(frame)    
     
     # Show the frames
     cv2.imshow('coloredCircles', frame)
-    #cv2.imshow('binaryImg', mask)
+    cv2.imshow('crop', crop)
     
     # If escape key is pressed exit while loop
     if cv2.waitKey(1) & 0xFF == 27:
