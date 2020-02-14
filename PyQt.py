@@ -11,11 +11,15 @@ class Window(QtWidgets.QMainWindow):
         
     def home(self):
         btn = QtWidgets.QPushButton("Quit", self)
-        btn.clicked.connect(QtCore.QCoreApplication.instance().quit)
+        btn.clicked.connect(self.close_function)
         btn.resize(100, 100)
         btn.move(100, 100)
         
         self.show()
+    
+    def close_function(self):
+    	print("yay i did a function thing")
+    	sys.exit()
         
         
     
