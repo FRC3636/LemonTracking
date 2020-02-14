@@ -81,22 +81,25 @@ def lemonFinder(frame):
             cv2.putText(frame, 'Pos:', (x + 5, y + 2 * (h/4)), 1, 1, 255, 2)
             cv2.putText(frame, '(' + str(x) + ', ' + str(y) + ')', (x + 5, y + 3 * (h/4)), 1, 1, 255, 2)
         
-    # crop image
-    
-    print("track")
-    print(trackX, trackY, trackH, trackW)
-    xpos = trackX + trackW
-    ypos = trackY + trackH
-    crop = frame[trackY:ypos,trackX:xpos]
-    print("crop")
-    print(crop.shape)
+        # crop image
+        xpos = x + w
+        ypos = y + h
+        crop = hsv[y:ypos,x:xpos]
+        
+        # Blur hsv
+        crophsv = cv2.GaussianBlur(crop, (41, 41), 0)
+
+        # Find remask the crop to confirm the ball
+        mask = cv2.inRange(crophsv, lower_yellow, upper_yellow)
+        
+        #plez add code to confirm ball
             
             
     # resize the image
     # frame = rescale_frame(frame, 300)
     
     # Return frame and mask
-    return(frame, crop)
+    return(frame, mask)
 
 
 
