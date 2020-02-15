@@ -3,14 +3,15 @@ import cv2
 import math
 import threading
 from networktables import NetworkTables
+import network
 
 cap = cv2.VideoCapture(1)
-#cap = cv2.VideoCapture('http://10.36.36.216:4747/mjpegfeed?640x480')   
-
+#cap = cv2.VideoCapture('http://10.234.1.144:4747/mjpegfeed?640x480')   
+'''
 # Sending stuff to RoboRio things       
 def connectionListener(connected, info):
     print(info, '; Connected=%s' % connected)
-    with cond:
+    with cond: 
         notified[0] = True
         cond.notify()
 
@@ -36,9 +37,11 @@ def rescale_frame(res, percent=75):
 
 def uploadPosition(x, y):
     sd = NetworkTables.getTable('SmartDashboard')
-    sd.putNumber('X', x);
+    sd.putNumber('X', x)
     sd.putNumber('Y', y)
-	
+
+'''
+
 # Lemon finder function
 def lemonFinder(frame):
 
@@ -129,7 +132,7 @@ def lemonFinder(frame):
     # Uploading x & y of closest ball to roborio
     #print('(' + str(trackX) + ', ' + str(trackY) + ')')
     if(trackX is not None and trackY is not None):
-        uploadPosition(trackX, trackY)
+        network.uploadPosition(trackX, trackY)
         
     
     # Return frame and mask
