@@ -3,44 +3,14 @@ import cv2
 import math
 import threading
 from networktables import NetworkTables
-import network
+import Network
 
-cap = cv2.VideoCapture(1)
-#cap = cv2.VideoCapture('http://10.234.1.144:4747/mjpegfeed?640x480')   
-'''
-# Sending stuff to RoboRio things       
-def connectionListener(connected, info):
-    print(info, '; Connected=%s' % connected)
-    with cond: 
-        notified[0] = True
-        cond.notify()
+cap = cv2.VideoCapture(0)
+#cap = cv2.VideoCapture('http://10.234.1.144:4747/mjpegfeed?640x480')
 
-cond = threading.Condition()
-notified = [False]
-NetworkTables.initialize(server='10.36.36.2')
-NetworkTables.addConnectionListener(connectionListener, immediateNotify=True)
-with cond:
-    print("Waiting")
-    if not notified[0]:
-        cond.wait()
-
-# Insert your processing code here
-print("Connected!")
-
-# Rescaling function
-def rescale_frame(res, percent=75):
-    width = int(res.shape[1] * percent/ 100)
-    height = int(res.shape[0] * percent/ 100)
-    dim = (width, height)
-    return cv2.resize(res, dim, interpolation =cv2.INTER_AREA)
-
-
-def uploadPosition(x, y):
-    sd = NetworkTables.getTable('SmartDashboard')
-    sd.putNumber('X', x)
-    sd.putNumber('Y', y)
-
-'''
+# Created Network object
+networkObj = Network.Network()
+   
 
 # Lemon finder function
 def lemonFinder(frame):
@@ -120,9 +90,9 @@ def lemonFinder(frame):
             cv2.rectangle(frame, (x, y), (x + w,y + h), (200,100,100), 2)
             
             # Add lemon position text
-            cv2.putText(frame, 'Ball' + str(balls), (x + 5, y + (h/4)), 1, 1, 255, 2)
-            cv2.putText(frame, 'Center:', (x + 5, y + 2 * (h/4)), 1, 1, 255, 2)
-            cv2.putText(frame, '(' + str(centerX) + ', ' + str(centerY) + ')', (x + 5, y + 3 * (h/4)), 1, 1, 255, 2)
+            cv2.putText(frame, 'Ball' + str(balls), (x + 5, y + int((h/4))), 1, 1, 255, 2)
+            cv2.putText(frame, 'Center:', (x + 5, y + 2 * int((h/4))), 1, 1, 255, 2)
+            cv2.putText(frame, '(' + str(centerX) + ', ' + str(centerY) + ')', (x + 5, y + 3 * int((h/4))), 1, 1, 255, 2)
             
             
             
@@ -132,7 +102,7 @@ def lemonFinder(frame):
     # Uploading x & y of closest ball to roborio
     #print('(' + str(trackX) + ', ' + str(trackY) + ')')
     if(trackX is not None and trackY is not None):
-        network.uploadPosition(trackX, trackY)
+        NetworkObj.uploadPosition(trackX, trackY)
         
     
     # Return frame and mask
