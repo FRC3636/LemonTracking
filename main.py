@@ -28,19 +28,17 @@ print("Connected!")
 
 # Rescaling function
 def rescale_frame(res, percent=75):
-            width = int(res.shape[1] * percent/ 100)
-            height = int(res.shape[0] * percent/ 100)
-            dim = (width, height)
-            return cv2.resize(res, dim, interpolation =cv2.INTER_AREA)
+    width = int(res.shape[1] * percent/ 100)
+    height = int(res.shape[0] * percent/ 100)
+    dim = (width, height)
+    return cv2.resize(res, dim, interpolation =cv2.INTER_AREA)
 
 
 def uploadPosition(x, y):
     sd = NetworkTables.getTable('SmartDashboard')
     sd.putNumber('X', x);
     sd.putNumber('Y', y)
-
-
-
+	
 # Lemon finder function
 def lemonFinder(frame):
 
