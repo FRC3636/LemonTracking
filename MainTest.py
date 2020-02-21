@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import time
 
 '''
 Note for other coders
@@ -8,19 +9,6 @@ The yellow boxes are the calibration objects (the one with the largest area
 Prints the statements of the calibration object
 Blue boxes are the tracked object
 '''
-def createCircleMask():
-    imgW = 640
-    imgH = 480
-
-    X = np.array(range(imgW))
-    Y = np.swapaxes([range(imgH)], 0, 1)
-
-    centerX = imgW/2
-    centerY = imgH/2
-
-    radii = np.sqrt((X - centerX) ** 2 + (Y - centerY) ** 2)
-
-    return radii
 
 cap = cv2.VideoCapture(0)
 
@@ -32,7 +20,7 @@ def rescale_frame(res, percent=75):
     return cv2.resize(res, dim, interpolation =cv2.INTER_AREA)
 
 # Lemon finder function
-def lemonFinder(frame, radii):
+def lemonFinder(frame):
 
     # to avoid error
     crop = frame
@@ -55,8 +43,8 @@ def lemonFinder(frame, radii):
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
     mask = cv2.erode(mask, kernel, iterations=1)
     mask = cv2.dilate(mask, kernel, iterations=1)
-    
-    
+
+
     # Bounding boxes
     # For drawing img
     # Find contours
@@ -64,7 +52,7 @@ def lemonFinder(frame, radii):
     
     # Create variable for number of balls
     balls = 0
-        
+
     # Variables for picking closest ball
     trackX = 0
     trackY = 0
@@ -93,38 +81,31 @@ def lemonFinder(frame, radii):
         # crop image
         xpos = trackX + trackW
         ypos = trackY + trackH
-        radius = trackW
 
         crop = frame[trackY:ypos, trackX:xpos]
-        radiiCrop = radii[trackY:ypos, trackX:xpos]
-
-        radiiMask = radiiCrop <= radius
-
-        crop = crop[~radiiMask]
+        hsvCrop = hsv[y:ypos, x:xpos]
 
         # average the crop color
-        average1 = np.mean(crop, axis=0)
+        average1 = np.mean(hsvCrop, axis=0)
         average2 = np.mean(average1, axis=0)
 
         # Draw rectangle
-        cv2.rectangle(frame, (trackX, trackY), (trackX + trackW, trackY + trackH), (10, 255, 255), 2)
+        #cv2.rectangle(frame, (trackX, trackY), (trackX + trackW, trackY + trackH), (10, 255, 255), 2)
 
-        #print(average2[0] > 30 and average2[0] < 80, average2[1] > 70 and average2[1] < 115, average2[2] > 65 and average2[2] < 160)
-
-        #print(average2[2])
+        print(average2, trackA)
 
         # actual tracking
         # crop image
         xpos = x + w
         ypos = y + h
-        crop = frame[y:ypos, x:xpos]
+        hsvCrop = hsv[y:ypos, x:xpos]
 
         # average the crop color
-        average1 = np.mean(crop, axis=0)
+        average1 = np.mean(hsvCrop, axis=0)
         average2 = np.mean(average1, axis=0)
 
         # use average to confirm ball
-        if average2[0] > 30 and average2[0] < 80 and average2[1] > 70 and average2[1] < 115 and average2[2] > 65 and average2[2] < 160:
+        if average2[0] > 20 and average2[0] < 70 and average2[1] > 100 and average2[1] < 180 and average2[2] > 110 and average2[2] < 220:
 
             # ball count
             balls += 1
@@ -135,17 +116,16 @@ def lemonFinder(frame, radii):
             # Add lemon position text
             cv2.putText(frame, 'Ball' + str(balls), (x + 5, int(y + (h/4))), 1, 1, 255, 2)
             cv2.putText(frame, 'Pos:', (x + 5, int(y + 2 * (h/4))), 1, 1, 255, 2)
-            cv2.putText(frame, '(' + str(x) + ', ' + str(y) + ')', (x + 5, int(y + 3 * (h/4))), 1, 1, 255, 2)
+            cv2.putText(frame, '(' + str(x) + ', ' + str(y) + ')', (x + 5, int(y + 3 * (h / 4))), 1, 1, 255, 2)
             
             
     # resize the image
-    # frame = rescale_frame(frame, 300)
+    frame = rescale_frame(frame, 300)
     
     # Return frame and mask
     return(frame)
 
 
-radii = createCircleMask()
 
 while(True):
 
@@ -153,7 +133,7 @@ while(True):
     ret, frame = cap.read()
  
     # Run the lemon finder function
-    frame = lemonFinder(frame, radii)
+    frame= lemonFinder(frame)
     
     # Show the frames
     cv2.imshow('coloredCircles', frame)
