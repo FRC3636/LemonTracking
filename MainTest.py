@@ -1,8 +1,5 @@
 import numpy as np
 import cv2
-import math
-import threading
-from networktables import NetworkTables
 
 '''
 Note for other coders
@@ -11,9 +8,21 @@ The yellow boxes are the calibration objects (the one with the largest area
 Prints the statements of the calibration object
 Blue boxes are the tracked object
 '''
+def createCircleMask():
+    imgW = 640
+    imgH = 480
+
+    X = np.array(range(imgW))
+    Y = np.swapaxes([range(imgH)], 0, 1)
+
+    centerX = imgW/2
+    centerY = imgH/2
+
+    radii = np.sqrt((X - centerX) ** 2 + (Y - centerY) ** 2)
+
+    return radii
 
 cap = cv2.VideoCapture(0)
-#cap = cv2.VideoCapture('http://10.36.36.216:4747/mjpegfeed?640x480')
 
 # Rescaling function
 def rescale_frame(res, percent=75):
@@ -23,7 +32,7 @@ def rescale_frame(res, percent=75):
     return cv2.resize(res, dim, interpolation =cv2.INTER_AREA)
 
 # Lemon finder function
-def lemonFinder(frame):
+def lemonFinder(frame, radii):
 
     # to avoid error
     crop = frame
@@ -84,7 +93,14 @@ def lemonFinder(frame):
         # crop image
         xpos = trackX + trackW
         ypos = trackY + trackH
+        radius = trackW
+
         crop = frame[trackY:ypos, trackX:xpos]
+        radiiCrop = radii[trackY:ypos, trackX:xpos]
+
+        radiiMask = radiiCrop <= radius
+
+        crop = crop[~radiiMask]
 
         # average the crop color
         average1 = np.mean(crop, axis=0)
@@ -93,9 +109,9 @@ def lemonFinder(frame):
         # Draw rectangle
         cv2.rectangle(frame, (trackX, trackY), (trackX + trackW, trackY + trackH), (10, 255, 255), 2)
 
-        print(average2[0] > 30 and average2[0] < 80, average2[1] > 70 and average2[1] < 115, average2[2] > 65 and average2[2] < 160)
+        #print(average2[0] > 30 and average2[0] < 80, average2[1] > 70 and average2[1] < 115, average2[2] > 65 and average2[2] < 160)
 
-        print(average2[2])
+        #print(average2[2])
 
         # actual tracking
         # crop image
@@ -129,6 +145,7 @@ def lemonFinder(frame):
     return(frame)
 
 
+radii = createCircleMask()
 
 while(True):
 
@@ -136,7 +153,7 @@ while(True):
     ret, frame = cap.read()
  
     # Run the lemon finder function
-    frame = lemonFinder(frame)
+    frame = lemonFinder(frame, radii)
     
     # Show the frames
     cv2.imshow('coloredCircles', frame)
