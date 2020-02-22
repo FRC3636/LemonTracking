@@ -43,13 +43,13 @@ def lemonFinder(frame, dist_img):
     crop = frame
     # Converting image to hsv and blur
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    hsv = cv2.GaussianBlur(hsv, (41, 41), 0) 
+    hsv = cv2.GaussianBlur(hsv, (41, 41), 0)
 
     # Define range of yellow  color in HSV and mask img
-    lower_yellow = np.array([20, 55, 15])  # old: [21,60,15]
+    lower_yellow = np.array([21, 50, 15])  # old: [21,60,15]
     upper_yellow = np.array([35, 255, 255])  # old: [32,255,255]
     mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
-    
+
     # Cleaning up mask
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
     mask = cv2.erode(mask, kernel, iterations=1)
@@ -57,10 +57,10 @@ def lemonFinder(frame, dist_img):
 
     # Find bounding Boxes
     contours, hierarchy = cv2.findContours(mask, 1, 2)
-    
+
     # Create variable for number of balls
     balls = 0
-    
+
     # Run for every contour
     for cont in contours:
         # Find boxes
@@ -71,7 +71,7 @@ def lemonFinder(frame, dist_img):
         xpos = x + w
         ypos = y + h
         crop = hsv[y:ypos, x:xpos]
-        circleMask = centerCrop(dist_img, w, h) < (w /2) ** 2
+        circleMask = centerCrop(dist_img, w, h) < (w / 3) ** 2
 
         circleColor = crop[circleMask]
 
@@ -81,26 +81,23 @@ def lemonFinder(frame, dist_img):
         # Draw rectangle
         #cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 200, 200), 2)
 
-        print(average, (w * h))
+        if (w * h) > 10000:
+            print(average, (w * h))
 
         # use average to confirm ball
-        if average[0] > 22 and average[0] < 30 and average[1] > 65 and average[1] < 175 and average[2] > 100 and average[2] < 175:
-
+        if average[0] > 20 and average[0] < 30 and average[1] > 80 and average[1] < 195 and average[2] > 90 and average[2] < 210 and (w * h) > 500: # and w/h > 0.8 and w/h < 1.2:
             # ball count
             balls += 1
-
-            # Draw rectangle
+            # Draw bounding box and text
             cv2.rectangle(frame, (x, y), (x + w, y + h), (200, 100, 100), 2)
-
-            # Add lemon position text
             cv2.putText(frame, 'Lemon' + str(balls), (x + 5, int(y + (h/4))), 1, 1, 255, 2)
             cv2.putText(frame, 'Pos:', (x + 5, int(y + 2 * (h/4))), 1, 1, 255, 2)
             cv2.putText(frame, '(' + str(x) + ', ' + str(y) + ')', (x + 5, int(y + 3 * (h / 4))), 1, 1, 255, 2)
 
 
     # resize the image
-    frame = rescale_frame(frame, 300)
-    
+    frame = rescale_frame(frame, 400)
+
     # Return frame and mask
     return(frame, crop)
 
@@ -111,14 +108,14 @@ while(True):
 
     # Capture frame-by-frame
     ret, frame = cap.read()
- 
+
     # Run the lemon finder function
     frame, crop = lemonFinder(frame, dist_img)
-    
+
     # Show the frames
     cv2.imshow('crop', crop)
     cv2.imshow('coloredCircles', frame)
-    
+
     # If escape key is pressed exit while loop
     if cv2.waitKey(1) & 0xFF == 27:
         break
